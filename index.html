@@ -671,10 +671,12 @@ class Gain {
 class Noise {
   constructor() {
     this.node = audioCtx.createBufferSource();
-    this.node.buffer = audioCtx.createBuffer(1, 48000, 48000);
+    let buffer = audioCtx.createBuffer(1, 48000, 48000);
+    let output = buffer.getChannelData(0);
     for (var i=0; i<48000; i++) {
-      this.node.buffer.getChannelData(0)[i] = Math.random()*2-1;
+      output[i] = Math.random()*2-1;
     }
+    this.node.buffer = buffer;
   }
   play(time) {this.node.start(time);}
   stop(time) {this.node.stop(time);}
