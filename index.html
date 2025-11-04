@@ -130,10 +130,9 @@ Todo:
 - Implement Oscilator envelope (done)
 - Implement Gain LFO (Amplitude Modulation) (done)
 - Encode/Decode output/input JSON (done)
-- Frequency Analyser
-- Touch Controls
-- Preset sounds
-- Preset sequences
+- Frequency Analyser (done)
+- Touch Controls (done)
+- Preset sequences (done)
 - Commenting/Auditing Code
 - Implement Filter envelope (done)
 */
@@ -144,12 +143,13 @@ const noteLookup = {};
 const waveC = getEle("waveC");
 const ctxC = waveC.getContext("2d");
 
-const cw = waveC.width = window.innerWidth;
-const ch = waveC.height = window.innerHeight;
 const soundWave = new Uint8Array(1024);
 
 const seqC = getEle("seqCanvas");
 const ctxS = seqC.getContext("2d");
+let cw = waveC.width = window.innerWidth;
+let ch = waveC.height = window.innerHeight;
+
 let seqZoom = 30;
 const sw = seqC.width = 570;
 const sh = seqC.height = 72*seqZoom;
@@ -344,6 +344,12 @@ function animate() {
   if (sequencePlaying > 0) drawSequence();
 }
 
+window.addEventListener('resize', () => {
+let cw = waveC.width = window.innerWidth;
+let ch = waveC.height = window.innerHeight;
+  
+});
+
 function drawBackgroundWave() {
   let inv = 1;
   if (getEle("waveVis").checked)
@@ -354,9 +360,10 @@ function drawBackgroundWave() {
   ctxC.lineWidth = 2;
   ctxC.strokeStyle = "white";
   ctxC.beginPath();
-  ctxC.moveTo(0, soundWave[0]+300);
+  const lineH = 150 + window.innerHeight/6;
+  ctxC.moveTo(0, soundWave[0]+lineH);
   for (let i = 1; i < soundWave.length; i++) {
-    ctxC.lineTo(i*(cw/soundWave.length), inv*soundWave[i]+300);
+    ctxC.lineTo(i*(cw/soundWave.length), inv*soundWave[i]+lineH);
   }
   ctxC.stroke();
 }
@@ -406,13 +413,14 @@ function captureWaveForButtons(sound) {
     osc.setPeriodicWave(wave);
     osc.start(audioCtx.currentTime);
   }
-  
-  setTimeout(() => {
-    do {analyser.getByteTimeDomainData(sound.dataArray);}
-    while (sound.dataArray[0] == 128)
-    osc.stop();
-    drawWaveForButtons(sound)
-  }, 15);
+  const intervalId = setInterval(() => {
+    analyser.getByteTimeDomainData(sound.dataArray);
+    if (sound.dataArray[0] != 128) {
+      osc.stop();
+      drawWaveForButtons(sound)
+      clearInterval(intervalId);
+    }
+  }, 30);  
 }
   
 function drawWaveForButtons(sound) {
